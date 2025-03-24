@@ -12,30 +12,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsLink = document.getElementById('settingsLink');
     const settingsCard = document.getElementById('settingsCard');
     const closeSettingsBtn = document.getElementById('closeSettingsBtn');
-    const changePasswordBtn = document.getElementById('changePasswordBtn');
+    const viewBookingsBtn = document.getElementById('viewBookingsBtn');
     const adminStatus = document.getElementById('adminStatus');
+    const donePopup = document.getElementById('donePopup');
 
-    // Exit early if critical elements are missing
-    if (!loader || !main || !modal || !form || !closeButton) {
-        console.error('Critical DOM elements missing, exiting early:', { loader, main, modal, form, closeButton });
+    if (!loader || !main || !modal || !form || !closeButton || !donePopup) {
+        console.error('Critical DOM elements missing:', { loader, main, modal, form, closeButton, donePopup });
         return;
     }
 
-    // Initial setup: default password and phone
-    let businessPassword = localStorage.getItem('businessPassword') || 'grooming123';
-    let businessPhone = localStorage.getItem('businessPhone') || '07845984597';
-
-    // Load existing bookings
+    // Initial setup
     let bookings = JSON.parse(localStorage.getItem('bookings')) || [];
 
     // Loader
     setTimeout(() => {
-        console.log('Hiding loader');
         loader.classList.add('hidden');
         setTimeout(() => {
             loader.style.display = 'none';
             main.removeAttribute('hidden');
-            displayBookings(); // Display bookings after page loads
         }, 500);
     }, 1500);
 
@@ -47,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Modal Close handlers
+    // Modal Close
     closeButton.addEventListener('click', () => modal.close());
     modal.addEventListener('click', e => {
         if (e.target === modal) modal.close();
@@ -61,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', e => {
             e.preventDefault();
             const targetId = link.getAttribute('href')?.slice(1);
-            const targetSection = targetId ? document.getElementById(targetId) : null;
+            const targetSection = document.getElementById(targetId);
             targetSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
@@ -79,29 +73,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Change Password Logic
-    if (changePasswordBtn && adminStatus) {
-        changePasswordBtn.addEventListener('click', () => {
-            const enteredPhone = prompt('Enter your phone number to verify:')?.trim();
-            if (enteredPhone === null) return; // User canceled prompt
-            if (enteredPhone === businessPhone) {
-                const newPassword = prompt('Enter your new password:')?.trim();
-                if (newPassword === null) return; // User canceled prompt
-                if (newPassword) {
-                    businessPassword = newPassword;
-                    localStorage.setItem('businessPassword', newPassword);
-                    adminStatus.textContent = 'Password updated successfully!';
-                    setTimeout(() => adminStatus.textContent = '', 3000);
-                } else {
-                    adminStatus.textContent = 'Password cannot be empty.';
-                }
-            } else {
-                adminStatus.textContent = 'Incorrect phone number.';
-            }
+    // View Bookings (Direct Link)
+    if (viewBookingsBtn) {
+        viewBookingsBtn.addEventListener('click', () => {
+            window.location.href = 'pract booking page for bussiness.html'; // Direct redirect to bookings.html
         });
     }
 
-    // Form Submission to localStorage
+    // Form Submission with "Done" Popup
     form.addEventListener('submit', e => {
         e.preventDefault();
         console.log('Form submitted - Saving to localStorage');
@@ -112,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const serviceInput = document.getElementById('service');
 
         if (!nameInput || !phoneInput || !dateInput || !serviceInput) {
-            console.error('Form inputs missing:', { nameInput, phoneInput, dateInput, serviceInput });
+            console.error('Form inputs missing');
             alert('Form is incomplete. Please try again.');
             return;
         }
@@ -124,87 +103,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Validation
         if (!nameValue) {
-            console.log('Validation failed: No name');
             alert('Please enter your name.');
             nameInput.focus();
             return;
         }
         if (!phoneValue || !/^\d{10}$/.test(phoneValue)) {
-            console.log('Validation failed: Invalid phone');
             alert('Phone number must be exactly 10 digits.');
             phoneInput.focus();
             return;
         }
         if (!dateValue) {
-            console.log('Validation failed: No date');
             alert('Please select a date.');
             dateInput.focus();
             return;
         }
         if (!serviceValue) {
-            console.log('Validation failed: No service');
             alert('Please select a service.');
             serviceInput.focus();
             return;
         }
 
-        // Save booking to localStorage
-        const booking = {
-            name: nameValue,
-            phone: phoneValue,
-            date: dateValue,
-            service: serviceValue
-        };
+        // Save booking
+        const booking = { name: nameValue, phone: phoneValue, date: dateValue, service: serviceValue };
         bookings.push(booking);
         localStorage.setItem('bookings', JSON.stringify(bookings));
         console.log('Booking saved:', booking);
 
-        // Display bookings and reset form
-        displayBookings();
+        // Show "Done" popup
+        donePopup.classList.add('active');
+        setTimeout(() => {
+            donePopup.classList.remove('active');
+        }, 2000);
+
+        // Reset form and close modal
         modal.close();
         form.reset();
         document.getElementById('home')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
-    // Function to display bookings day-wise
-    function displayBookings() {
-        const display = document.getElementById('bookingsDisplay');
-        if (!display) return;
+    // Blog Read More Toggle
+    const readMoreLinks = document.querySelectorAll('.read-more');
+    readMoreLinks.forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            const blogCard = link.closest('.blog-card');
+            const fullText = blogCard.querySelector('.full-text');
 
-        display.innerHTML = '<h2>Upcoming Bookings</h2>';
-        const bookingsByDate = {};
-
-        // Group bookings by date
-        bookings.forEach(booking => {
-            if (!bookingsByDate[booking.date]) bookingsByDate[booking.date] = [];
-            bookingsByDate[booking.date].push(booking);
+            if (blogCard && fullText) {
+                if (blogCard.classList.contains('expanded')) {
+                    blogCard.classList.remove('expanded');
+                    fullText.setAttribute('hidden', '');
+                    link.textContent = 'Read more';
+                } else {
+                    blogCard.classList.add('expanded');
+                    fullText.removeAttribute('hidden');
+                    link.textContent = 'Read less';
+                }
+            }
         });
-
-        // Sort dates and display
-        Object.keys(bookingsByDate).sort().forEach(date => {
-            const dateSection = document.createElement('div');
-            dateSection.className = 'date-section';
-            dateSection.innerHTML = `<h3>${formatDate(date)}</h3>`;
-            bookingsByDate[date].forEach(booking => {
-                const bookingDiv = document.createElement('div');
-                bookingDiv.className = 'booking-item';
-                bookingDiv.innerHTML = `
-                    <strong>${booking.name}</strong><br>
-                    Phone: ${booking.phone}<br>
-                    Service: ${booking.service}
-                `;
-                dateSection.appendChild(bookingDiv);
-            });
-            display.appendChild(dateSection);
-        });
-    }
-
-    // Format date for display
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    }
-
-    // Initial display of bookings
-    displayBookings();
+    });
 });
