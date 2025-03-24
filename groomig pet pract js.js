@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // View Bookings (Direct Link)
     if (viewBookingsBtn) {
         viewBookingsBtn.addEventListener('click', () => {
-            window.location.href = 'pract booking page for bussiness.html'; // Direct redirect to bookings.html
+            window.location.href = 'https://maytri315.github.io/pet-grooming-bookingpage/index.html'; // Direct redirect to bookings.html
         });
     }
 
